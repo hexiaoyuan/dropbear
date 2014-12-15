@@ -961,18 +961,33 @@ static void execchild(void *user_data) {
 	addnewvar("SHELL", get_user_shell());
 #ifdef ANDROID
 	if(svr_opts.android_mode) {
-		addnewvar("PATH", "/sbin:/system/sbin:/system/bin:/system/xbin");
-		addnewvar("ANDROID_ASSETS", "/system/app");
-		addnewvar("ANDROID_BOOTLOGO", "1");
-		addnewvar("ANDROID_DATA", "/data");
-		addnewvar("ANDROID_ROOT", "/system");
+		/* save some android-specific environment variables */
+		const char *and_env_name[] = { 
+			"ANDROID_ASSETS",
+			"ANDROID_BOOTLOGO",
+			"ANDROID_DATA",
+			"ANDROID_ROOT",
+			"ANDROID_PROPERTY_WORKSPACE",
+			"BOOTCLASSPATH",
+			"LD_LIBRARY_PATH",
+			"EXTERNAL_STORAGE",
+			"SD_EXT_DIRECTORY"
+		};
+		const int and_env_count = sizeof(and_env_name) / sizeof(*and_env_name);
+		char *and_env_value[and_env_count];
+		int i;
+		for (i = 0; i < and_env_count; i++) {
+			char *val = getenv(and_env_name[i]);
+			and_env_value[i] = val ? strdup(val) : NULL;
+		}
 
-		addnewvar("EXTERNAL_STORAGE", getenv("EXTERNAL_STORAGE"));
-		addnewvar("ANDROID_PROPERTY_WORKSPACE", getenv("ANDROID_PROPERTY_WORKSPACE"));
-		addnewvar("BOOTCLASSPATH", getenv("BOOTCLASSPATH"));
-		addnewvar("LD_LIBRARY_PATH", getenv("LD_LIBRARY_PATH"));
-
-	}else
+		for (i = 0; i < and_env_count; i++) {
+			if (and_env_value[i]) {
+				addnewvar(and_env_name[i], and_env_value[i]);
+				free(and_env_value[i]);
+			}
+		}
+	}
 #endif
 	addnewvar("PATH", DEFAULT_PATH);
 	if (chansess->term != NULL) {

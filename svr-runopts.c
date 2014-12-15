@@ -45,7 +45,7 @@ static void printhelp(const char * progname) {
 					"-A Android Mode, specify a user explicitly\n"
 					"-N Android Mode, user name\n"
 					"-C Android Mode, password\n"
-					"-Q Android Mode, public key file (authorized_keys)\n"
+					"-f Android Mode, public key file (authorized_keys)\n"
 					"-U Android Mode, UID\n"
 					"-G Android Mode, GID\n"
 #endif
@@ -101,9 +101,7 @@ static void printhelp(const char * progname) {
 					"-K <keepalive>  (0 is never, default %d, in seconds)\n"
 					"-I <idle_timeout>  (0 is never, default %d, in seconds)\n"
 					"-V    Version\n"
-#ifdef DEBUG_TRACE
 					"-v		verbose (compiled with DEBUG_TRACE)\n"
-#endif
 					,DROPBEAR_VERSION, progname,
 #ifdef DROPBEAR_DSS
 					DSS_PRIV_FILENAME,
@@ -222,7 +220,7 @@ void svr_getopts(int argc, char ** argv) {
 				case 'C':
 					next = &svr_opts.passwd;
 					break;
-				case 'Q':
+				case 'f':
 					next = &svr_opts.authkey;
 					break;
 				case 'U':
@@ -312,11 +310,11 @@ void svr_getopts(int argc, char ** argv) {
 				case 'u':
 					/* backwards compatibility with old urandom option */
 					break;
-#ifdef DEBUG_TRACE
 				case 'v':
+#ifdef DEBUG_TRACE
 					debug_trace = 1;
-					break;
 #endif
+					break;
 				case 'V':
 					print_version();
 					exit(EXIT_SUCCESS);

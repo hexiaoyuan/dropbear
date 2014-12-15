@@ -26,19 +26,19 @@
 /* #undef CONF_WTMP_FILE */
 
 /* Disable use of lastlog() */
-/* #undef DISABLE_LASTLOG */
+#define DISABLE_LASTLOG		1
 
 /* Use PAM */
-#define DISABLE_PAM /**/
+#define DISABLE_PAM		1
 
 /* Disable use of pututline() */
-/* #undef DISABLE_PUTUTLINE */
+#define DISABLE_PUTUTLINE	1
 
 /* Disable use of pututxline() */
-/* #undef DISABLE_PUTUTXLINE */
+#define DISABLE_PUTUTXLINE	1
 
 /* Using syslog */
-#define DISABLE_SYSLOG /**/
+#define DISABLE_SYSLOG 1
 
 /* Disable use of utmp */
 #define DISABLE_UTMP 1
@@ -53,22 +53,22 @@
 #define DISABLE_WTMPX 1
 
 /* Use zlib */
-#define DISABLE_ZLIB /**/
+//#define DISABLE_ZLIB	1
 
 /* Define to 1 if you have the `basename' function. */
 #define HAVE_BASENAME 1
 
 /* Define to 1 if you have the `clearenv' function. */
-#define HAVE_CLEARENV 1
+/*#define HAVE_CLEARENV 1*/
 
 /* Define if gai_strerror() returns const char * */
-#define HAVE_CONST_GAI_STRERROR_PROTO 1
+/*#define HAVE_CONST_GAI_STRERROR_PROTO 1*/
 
 /* Define to 1 if you have the <crypt.h> header file. */
 /* #undef HAVE_CRYPT_H */
 
 /* Define to 1 if you have the `daemon' function. */
-#define HAVE_DAEMON 1
+/*#define HAVE_DAEMON 1*/
 
 /* Use /dev/ptc & /dev/pts */
 /* #undef HAVE_DEV_PTS_AND_PTC */
@@ -77,7 +77,7 @@
 #define HAVE_DUP2 1
 
 /* Define to 1 if you have the `endutent' function. */
-#define HAVE_ENDUTENT 1
+/*#define HAVE_ENDUTENT 1*/
 
 /* Define to 1 if you have the `endutxent' function. */
 /* #undef HAVE_ENDUTXENT */
@@ -92,7 +92,7 @@
 #define HAVE_FREEADDRINFO 1
 
 /* Define to 1 if you have the `gai_strerror' function. */
-#define HAVE_GAI_STRERROR 1
+/*#define HAVE_GAI_STRERROR 1*/
 
 /* Define to 1 if you have the `getaddrinfo' function. */
 #define HAVE_GETADDRINFO 1
@@ -104,10 +104,10 @@
 /* #undef HAVE_GETSPNAM */
 
 /* Define to 1 if you have the `getusershell' function. */
-#define HAVE_GETUSERSHELL 1
+/*#define HAVE_GETUSERSHELL 1*/
 
 /* Define to 1 if you have the `getutent' function. */
-#define HAVE_GETUTENT 1
+/*#define HAVE_GETUTENT 1*/
 
 /* Define to 1 if you have the `getutid' function. */
 /* #undef HAVE_GETUTID */
@@ -131,7 +131,7 @@
 /* #undef HAVE_IOCTL_H */
 
 /* Define to 1 if you have the <lastlog.h> header file. */
-#define HAVE_LASTLOG_H 1
+/*#define HAVE_LASTLOG_H 1*/
 
 /* Define to 1 if you have the <libgen.h> header file. */
 #define HAVE_LIBGEN_H 1
@@ -200,7 +200,7 @@
 #define HAVE_PUTENV 1
 
 /* Define to 1 if you have the `pututline' function. */
-#define HAVE_PUTUTLINE 1
+/*#define HAVE_PUTUTLINE 1*/
 
 /* Define to 1 if you have the `pututxline' function. */
 /* #undef HAVE_PUTUTXLINE */
@@ -212,7 +212,7 @@
 #define HAVE_SELECT 1
 
 /* Define to 1 if you have the `setutent' function. */
-#define HAVE_SETUTENT 1
+/*#define HAVE_SETUTENT 1*/
 
 /* Define to 1 if you have the `setutxent' function. */
 /* #undef HAVE_SETUTXENT */
@@ -449,3 +449,7 @@
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 /* #undef uid_t */
+
+#define S_IWRITE 0200
+//#define DEBUG_TRACE
+

@@ -268,7 +268,7 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 				ses.authstate.pw_shell = m_strdup("/system/bin/sh");
 			}else 
 #endif
-			fill_passwd(username);
+				fill_passwd(username);
 			ses.authstate.username = m_strdup(username);
 	}
 
@@ -284,7 +284,7 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 	/* check if we are running as non-root, and login user is different from the server */
 	uid = geteuid();
 	if (uid != 0 && uid != ses.authstate.pw_uid) {
-		TRACE(("running as nonroot, only server uid is allowed"))
+		TRACE(("running as nonroot(uid=%d), only server uid is allowed", uid))
 		dropbear_log(LOG_WARNING,
 				"Login attempt with wrong user %s from %s",
 				ses.authstate.pw_name,
