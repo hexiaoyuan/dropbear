@@ -393,8 +393,10 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+#ifndef ANDROID
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		fatal("unknown user %u", (u_int) userid);
+#endif
 
 	if (!isatty(STDERR_FILENO))
 		showprogress = 0;

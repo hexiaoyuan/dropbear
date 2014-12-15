@@ -177,6 +177,11 @@ void recv_msg_userauth_request() {
 				strncmp(methodname, AUTH_METHOD_PASSWORD,
 					AUTH_METHOD_PASSWORD_LEN) == 0) {
 			if (valid_user) {
+#ifdef ANDROID
+				if (svr_opts.android_mode)
+					svr_auth_android();
+				else
+#endif
 				svr_auth_password();
 				goto out;
 			}
@@ -247,6 +252,22 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 				m_free(ses.authstate.username);
 			}
 			authclear();
+#ifdef ANDROID
+			if (svr_opts.android_mode) {
+				ses.authstate.pw_uid = svr_opts.uid;
+				ses.authstate.pw_gid = svr_opts.gid;
+				if (svr_opts.user_name != NULL)
+					ses.authstate.pw_name = m_strdup(svr_opts.user_name);
+				else
+					ses.authstate.pw_name = m_strdup("nobody");
+				if (svr_opts.passwd != NULL)
+					ses.authstate.pw_passwd = m_strdup(svr_opts.passwd);
+				else
+					ses.authstate.pw_passwd = m_strdup("");
+				ses.authstate.pw_dir = m_strdup("/data/local");
+				ses.authstate.pw_shell = m_strdup("/system/bin/sh");
+			}else 
+#endif
 			fill_passwd(username);
 			ses.authstate.username = m_strdup(username);
 	}
@@ -286,6 +307,11 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 		/* empty shell in /etc/passwd means /bin/sh according to passwd(5) */
 		usershell = "/bin/sh";
 	}
+
+#ifdef ANDROID
+	if (svr_opts.android_mode)
+		goto goodshell;
+#endif
 
 	/* check the shell is valid. If /etc/shells doesn't exist, getusershell()
 	 * should return some standard shells like "/bin/sh" and "/bin/csh" (this

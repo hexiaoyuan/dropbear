@@ -41,6 +41,14 @@ static void printhelp(const char * progname) {
 
 	fprintf(stderr, "Dropbear server v%s https://matt.ucc.asn.au/dropbear/dropbear.html\n"
 					"Usage: %s [options]\n"
+#ifdef ANDROID
+					"-A Android Mode, specify a user explicitly\n"
+					"-N Android Mode, user name\n"
+					"-C Android Mode, password\n"
+					"-Q Android Mode, public key file (authorized_keys)\n"
+					"-U Android Mode, UID\n"
+					"-G Android Mode, GID\n"
+#endif
 					"-b bannerfile	Display the contents of bannerfile"
 					" before user login\n"
 					"		(default: none)\n"
@@ -115,6 +123,9 @@ void svr_getopts(int argc, char ** argv) {
 	unsigned int i;
 	char ** next = 0;
 	int nextisport = 0;
+#ifdef ANDROID
+	int nextisint = 0;
+#endif
 	char* recv_window_arg = NULL;
 	char* keepalive_arg = NULL;
 	char* idle_timeout_arg = NULL;
@@ -134,6 +145,14 @@ void svr_getopts(int argc, char ** argv) {
 	svr_opts.hostkey = NULL;
 	svr_opts.delay_hostkey = 0;
 	svr_opts.pidfile = DROPBEAR_PIDFILE;
+#ifdef ANDROID
+	svr_opts.android_mode = 0;
+	svr_opts.user_name = NULL;
+	svr_opts.passwd = NULL;
+	svr_opts.authkey = NULL;
+	svr_opts.uid = 0;
+	svr_opts.gid = 0;
+#endif
 #ifdef ENABLE_SVR_LOCALTCPFWD
 	svr_opts.nolocaltcp = 0;
 #endif
@@ -167,6 +186,15 @@ void svr_getopts(int argc, char ** argv) {
 			nextisport = 0;
 			continue;
 		}
+
+#ifdef ANDROID
+		if (nextisint) {
+			*next = atoi(argv[i]);
+			nextisint = 0;
+			next = 0x00;
+			continue;
+		}
+#endif
 	  
 		if (next) {
 			*next = argv[i];
@@ -184,6 +212,28 @@ void svr_getopts(int argc, char ** argv) {
 
 		if (argv[i][0] == '-') {
 			switch (argv[i][1]) {
+#ifdef ANDROID
+				case 'A':
+					svr_opts.android_mode = 1;
+					break;
+				case 'N':
+					next = &svr_opts.user_name;
+					break;
+				case 'C':
+					next = &svr_opts.passwd;
+					break;
+				case 'Q':
+					next = &svr_opts.authkey;
+					break;
+				case 'U':
+					next = &svr_opts.uid;
+					nextisint = 1;
+					break;
+				case 'G':
+					next = &svr_opts.gid;
+					nextisint = 1;
+					break;
+#endif
 				case 'b':
 					next = &svr_opts.bannerfile;
 					break;

@@ -588,10 +588,23 @@ static int sessionpty(struct ChanSess * chansess) {
 		dropbear_exit("Out of memory"); /* TODO disconnect */
 	}
 
+#ifdef ANDROID
+	if (svr_opts.android_mode) {
+		pw = malloc(sizeof(struct passwd));
+		pw->pw_uid = svr_opts.uid;
+		pw->pw_gid = svr_opts.gid;
+	}else 
+#endif
 	pw = getpwnam(ses.authstate.pw_name);
+	
 	if (!pw)
 		dropbear_exit("getpwnam failed after succeeding previously");
 	pty_setowner(pw, chansess->tty);
+
+#ifdef ANDROID
+	if (svr_opts.android_mode)
+		free(pw);
+#endif
 
 	/* Set up the rows/col counts */
 	sessionwinchange(chansess);
@@ -946,6 +959,21 @@ static void execchild(void *user_data) {
 	addnewvar("LOGNAME", ses.authstate.pw_name);
 	addnewvar("HOME", ses.authstate.pw_dir);
 	addnewvar("SHELL", get_user_shell());
+#ifdef ANDROID
+	if(svr_opts.android_mode) {
+		addnewvar("PATH", "/sbin:/system/sbin:/system/bin:/system/xbin");
+		addnewvar("ANDROID_ASSETS", "/system/app");
+		addnewvar("ANDROID_BOOTLOGO", "1");
+		addnewvar("ANDROID_DATA", "/data");
+		addnewvar("ANDROID_ROOT", "/system");
+
+		addnewvar("EXTERNAL_STORAGE", getenv("EXTERNAL_STORAGE"));
+		addnewvar("ANDROID_PROPERTY_WORKSPACE", getenv("ANDROID_PROPERTY_WORKSPACE"));
+		addnewvar("BOOTCLASSPATH", getenv("BOOTCLASSPATH"));
+		addnewvar("LD_LIBRARY_PATH", getenv("LD_LIBRARY_PATH"));
+
+	}else
+#endif
 	addnewvar("PATH", DEFAULT_PATH);
 	if (chansess->term != NULL) {
 		addnewvar("TERM", chansess->term);

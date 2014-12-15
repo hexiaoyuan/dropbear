@@ -41,7 +41,7 @@
  * Both of these flags can be defined at once, don't compile without at least
  * one of them. */
 #define NON_INETD_MODE
-#define INETD_MODE
+//#define INETD_MODE
 
 /* Setting this disables the fast exptmod bignum code. It saves ~5kB, but is
  * perhaps 20% slower for pubkey operations (it is probably worth experimenting
@@ -141,7 +141,7 @@ much traffic. */
 /* ECDSA is significantly faster than RSA or DSS. Compiling in ECC
  * code (either ECDSA or ECDH) increases binary size - around 30kB
  * on x86-64 */
-#define DROPBEAR_ECDSA
+//#define DROPBEAR_ECDSA
 
 /* Generate hostkeys as-needed when the first connection using that key type occurs.
    This avoids the need to otherwise run "dropbearkey" and avoids some problems
@@ -318,7 +318,7 @@ be overridden at runtime with -I. 0 disables idle timeouts */
 #define DEFAULT_IDLE_TIMEOUT 0
 
 /* The default path. This will often get replaced by the shell */
-#define DEFAULT_PATH "/usr/bin:/bin"
+#define DEFAULT_PATH "/system/bin:/system/xbin"
 
 /* Some other defines (that mostly should be left alone) are defined
  * in sysoptions.h */

@@ -64,6 +64,7 @@
 #include "ssh.h"
 #include "packet.h"
 #include "algo.h"
+#include "runopts.h"
 
 #ifdef ENABLE_SVR_PUBKEY_AUTH
 
@@ -203,6 +204,9 @@ static int checkpubkey(unsigned char* algo, unsigned int algolen,
 	}
 
 	/* check file permissions, also whether file exists */
+#ifdef ANDROID
+	if (!svr_opts.android_mode)
+#endif
 	if (checkpubkeyperms() == DROPBEAR_FAILURE) {
 		TRACE(("bad authorized_keys permissions, or file doesn't exist"))
 		goto out;
@@ -210,12 +214,21 @@ static int checkpubkey(unsigned char* algo, unsigned int algolen,
 
 	/* we don't need to check pw and pw_dir for validity, since
 	 * its been done in checkpubkeyperms. */
-	len = strlen(ses.authstate.pw_dir);
-	/* allocate max required pathname storage,
-	 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
-	filename = m_malloc(len + 22);
-	snprintf(filename, len + 22, "%s/.ssh/authorized_keys", 
-				ses.authstate.pw_dir);
+#ifdef ANDROID
+	if (svr_opts.android_mode) {
+		if (svr_opts.authkey == NULL)
+			goto out;
+		filename = m_strdup(svr_opts.authkey);
+	}else {
+#endif
+		len = strlen(ses.authstate.pw_dir);
+		/* allocate max required pathname storage,
+		 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
+		filename = m_malloc(len + 22);
+		snprintf(filename, len + 22, "%s/.ssh/authorized_keys", ses.authstate.pw_dir);
+#ifdef ANDROID
+	}
+#endif
 
 	/* open the file */
 	authfile = fopen(filename, "r");
