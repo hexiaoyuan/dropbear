@@ -1,0 +1,36 @@
+# dropbear ndk-build for android
+
+
+## build
+$ ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk
+
+## push to device
+$ adb shell mkdir -p /data/local/tmp/appdir/dropbear
+$ adb push libs/armeabi /data/local/tmp/appdir/dropbear/
+
+## prepare before run
+
+$ adb shell
+$ cd /data/local/tmp/appdir/dropbear/
+$ echo 'Welcome Dropbear(sshd)!!! [shell/123123] ' > banner
+$ dropbearkey -t dss -f dropbear_dss_host_key
+$ dropbearkey -t rsa -f dropbear_rsa_host_key
+
+>>> Note HERE!!! Put your pub-key in this file...
+$ touch /data/local/tmp/appdir/dropbear/authorized_keys
+$ chmod 600 /data/local/tmp/appdir/dropbear/authorized_keys
+
+## run dropbear
+$ adb shell
+$ /data/local/tmp/appdir/dropbear/dropbear \
+-A -N shell -U 2000 -G 2000 -C '123123' \
+-b /data/local/tmp/appdir/dropbear/banner \
+-r /data/local/tmp/appdir/dropbear/dropbear_dss_host_key \
+-r /data/local/tmp/appdir/dropbear/dropbear_rsa_host_key \
+-f /data/local/tmp/appdir/dropbear/authorized_keys \
+-p 2222 -F \
+-v -v -v -v -v -v 
+
+## connect testing
+$ ssh shell@192.168.1.120 -p 2222
+
