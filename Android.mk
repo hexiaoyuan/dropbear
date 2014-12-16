@@ -3,9 +3,14 @@
 #
 
 
+APP_PLATFORM := android-16
+TARGET_PIE := true
+NDK_APP_PIE := true
+
 LOCAL_PATH:= $(call my-dir)
 
-a_local_cflags := -O3 -Wall -DDROPBEAR_SERVER -DDROPBEAR_CLIENT
+a_local_cflags := -O3 -Wall -fPIE -DDROPBEAR_SERVER -DDROPBEAR_CLIENT 
+a_local_ldflags : = -O3 -Wall -pie -fPIE
 
 a_src_common=dbutil.c buffer.c \
 			 dss.c bignum.c \
@@ -43,6 +48,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := ssh
 LOCAL_SRC_FILES:= $(a_src_common) $(a_src_clisvr) $(a_src_cli)
 LOCAL_CFLAGS += $(a_local_cflags)
+LOCAL_LDFLAGS += $(a_local_ldflags)
 LOCAL_C_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)/libtommath $(LOCAL_PATH)/libtomcrypt/src/headers
 LOCAL_STATIC_LIBRARIES := libtommath libtomcrypt
 LOCAL_LDLIBS := -lz
@@ -54,6 +60,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := scp
 LOCAL_SRC_FILES:= $(a_src_scp)
 LOCAL_CFLAGS += $(a_local_cflags) -DPROGRESS_METER
+LOCAL_LDFLAGS += $(a_local_ldflags)
 LOCAL_C_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)/libtommath $(LOCAL_PATH)/libtomcrypt/src/headers
 LOCAL_STATIC_LIBRARIES := libtommath libtomcrypt
 LOCAL_MODULE_TAGS := optional
@@ -65,6 +72,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := dropbear
 LOCAL_SRC_FILES:= $(a_src_common) $(a_src_clisvr) $(a_src_srv)
 LOCAL_CFLAGS += $(a_local_cflags)
+LOCAL_LDFLAGS += $(a_local_ldflags)
 LOCAL_C_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)/libtommath $(LOCAL_PATH)/libtomcrypt/src/headers
 LOCAL_STATIC_LIBRARIES := libtommath libtomcrypt
 LOCAL_LDLIBS := -lz
@@ -76,6 +84,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := dropbearkey
 LOCAL_SRC_FILES:= $(a_src_common) $(a_src_key)
 LOCAL_CFLAGS += $(a_local_cflags)
+LOCAL_LDFLAGS += $(a_local_ldflags)
 LOCAL_C_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)/libtommath $(LOCAL_PATH)/libtomcrypt/src/headers
 LOCAL_STATIC_LIBRARIES := libtommath libtomcrypt
 LOCAL_MODULE_TAGS := optional
@@ -87,6 +96,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := dropbearconvert
 LOCAL_SRC_FILES:= $(a_src_common) $(a_src_convert)
 LOCAL_CFLAGS += $(a_local_cflags)
+LOCAL_LDFLAGS += $(a_local_ldflags)
 LOCAL_C_INCLUDES += $(LOCAL_PATH) $(LOCAL_PATH)/libtommath $(LOCAL_PATH)/libtomcrypt/src/headers
 LOCAL_STATIC_LIBRARIES := libtommath libtomcrypt
 LOCAL_MODULE_TAGS := optional

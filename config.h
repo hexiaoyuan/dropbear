@@ -451,5 +451,5 @@
 /* #undef uid_t */
 
 #define S_IWRITE 0200
-//#define DEBUG_TRACE
+#define DEBUG_TRACE
 

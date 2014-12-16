@@ -12,9 +12,9 @@ $ adb push libs/armeabi /data/local/tmp/appdir/dropbear/
 
 $ adb shell
 $ cd /data/local/tmp/appdir/dropbear/
-$ echo 'Welcome Dropbear(sshd)!!! [shell/123123] ' > banner
-$ dropbearkey -t dss -f dropbear_dss_host_key
-$ dropbearkey -t rsa -f dropbear_rsa_host_key
+$ echo 'Welcome Dropbear(sshd)!!! [shell/123123] ' > /data/local/tmp/appdir/dropbear/banner
+$ /data/local/tmp/appdir/dropbear/dropbearkey -t dss -f /data/local/tmp/appdir/dropbear/dropbear_dss_host_key
+$ /data/local/tmp/appdir/dropbear/dropbearkey -t rsa -f /data/local/tmp/appdir/dropbear/dropbear_rsa_host_key
 
 >>> Note HERE!!! Put your pub-key in this file...
 $ touch /data/local/tmp/appdir/dropbear/authorized_keys
@@ -28,9 +28,10 @@ $ /data/local/tmp/appdir/dropbear/dropbear \
 -r /data/local/tmp/appdir/dropbear/dropbear_dss_host_key \
 -r /data/local/tmp/appdir/dropbear/dropbear_rsa_host_key \
 -f /data/local/tmp/appdir/dropbear/authorized_keys \
--p 2222 -F \
+-p 2022 -F \
 -v -v -v -v -v -v 
 
 ## connect testing
-$ ssh shell@192.168.1.120 -p 2222
+$ ssh shell@192.168.1.120 -p 2022
 
+ssh shell@192.168.0.112 -p 2022
