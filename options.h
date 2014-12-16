@@ -11,7 +11,7 @@
 /* IMPORTANT: Many options will require "make clean" after changes */
 
 #ifndef DROPBEAR_DEFPORT
-#define DROPBEAR_DEFPORT "2222"
+#define DROPBEAR_DEFPORT "22022"
 #endif
 
 #ifndef DROPBEAR_DEFADDRESS
@@ -276,7 +276,9 @@ much traffic. */
 
 /* This is used by the scp binary when used as a client binary. If you're
  * not using the Dropbear client, you'll need to change it */
+#ifndef _PATH_SSH_PROGRAM
 #define _PATH_SSH_PROGRAM "/data/dropbear/scp"
+#endif
 
 /* Whether to log commands executed by a client. This only logs the 
  * (single) command sent to the server, not what a user did in a 

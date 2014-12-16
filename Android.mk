@@ -7,10 +7,12 @@ APP_PLATFORM := android-16
 TARGET_PIE := true
 NDK_APP_PIE := true
 
-LOCAL_PATH:= $(call my-dir)
-
 a_local_cflags := -O3 -Wall -fPIE -DDROPBEAR_SERVER -DDROPBEAR_CLIENT 
-a_local_ldflags : = -O3 -Wall -pie -fPIE
+a_local_cflags += -DDROPBEAR_DEFPORT=22022
+a_local_cflags += -DSFTPSERVER_PATH='"/data/data/cn.redonly.ssh/dropbear/sftp-server"'
+a_local_cflags += -D_PATH_SSH_PROGRAM='"/data/data/cn.redonly.ssh/dropbear/scp"'
+
+a_local_ldflags := -O3 -Wall -pie -fPIE
 
 a_src_common=dbutil.c buffer.c \
 			 dss.c bignum.c \

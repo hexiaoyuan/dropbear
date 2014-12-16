@@ -1,5 +1,7 @@
 # dropbear ndk-build for android
 
+## sftp-server
+NOTE: copy from https://github.com/jhulst/android_external_dropbear.git
 
 ## build
 $ ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk
