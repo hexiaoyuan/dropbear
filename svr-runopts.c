@@ -38,7 +38,6 @@ static void loadhostkey(const char *keyfile, int fatal_duplicate);
 static void addhostkey(const char *keyfile);
 
 static void printhelp(const char * progname) {
-
 	fprintf(stderr, "Dropbear server v%s https://matt.ucc.asn.au/dropbear/dropbear.html\n"
 					"Usage: %s [options]\n"
 #ifdef ANDROID
@@ -100,7 +99,7 @@ static void printhelp(const char * progname) {
 					"-W <receive_window_buffer> (default %d, larger may be faster, max 1MB)\n"
 					"-K <keepalive>  (0 is never, default %d, in seconds)\n"
 					"-I <idle_timeout>  (0 is never, default %d, in seconds)\n"
-					"-V    Version\n"
+					"-V		Version\n"
 					"-v		verbose (compiled with DEBUG_TRACE)\n"
 					,DROPBEAR_VERSION, progname,
 #ifdef DROPBEAR_DSS

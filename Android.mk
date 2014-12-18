@@ -8,7 +8,8 @@ TARGET_PIE := true
 NDK_APP_PIE := true
 
 a_local_cflags := -O3 -Wall -fPIE -DDROPBEAR_SERVER -DDROPBEAR_CLIENT 
-a_local_cflags += -DDROPBEAR_DEFPORT=22022
+a_local_cflags += -DDEBUG_TRACE
+a_local_cflags += -DDROPBEAR_DEFPORT='"22022"'
 a_local_cflags += -DSFTPSERVER_PATH='"/data/data/cn.redonly.ssh/dropbear/sftp-server"'
 a_local_cflags += -D_PATH_SSH_PROGRAM='"/data/data/cn.redonly.ssh/dropbear/scp"'
 

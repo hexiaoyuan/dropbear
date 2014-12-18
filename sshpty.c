@@ -404,8 +404,11 @@ pty_setowner(struct passwd *pw, const char *tty_name)
 					"chmod(%.100s, 0%o) failed: %.100s",
 					tty_name, mode, strerror(errno));
 			} else {
-				dropbear_exit("chmod(%.100s, 0%o) failed: %.100s",
-				    tty_name, mode, strerror(errno));
+#ifdef ANDROID	// 020600 -> 0622 failed on my Android 5.0, just ignore. -- pete, FIXME!!!
+				dropbear_log(LOG_ERR, "[XXX] chmod(%.100s, 0%o) failed(st_mode=0%o): %.100s", tty_name, mode, st.st_mode, strerror(errno));
+#else
+				dropbear_exit("chmod(%.100s, 0%o) failed: %.100s", tty_name, mode, strerror(errno));
+#endif
 			}
 		}
 	}
