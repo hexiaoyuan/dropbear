@@ -11,7 +11,7 @@ a_local_cflags := -O3 -Wall -fPIE -DDROPBEAR_SERVER -DDROPBEAR_CLIENT
 a_local_cflags += -DDEBUG_TRACE
 a_local_cflags += -DDROPBEAR_DEFPORT='"22022"'
 a_local_cflags += -DSFTPSERVER_PATH='"/data/data/cn.redonly.sshd4nd/dropbear/sftp-server"'
-a_local_cflags += -D_PATH_SSH_PROGRAM='"/data/data/cn.redonly.sshd4nd/dropbear/scp"'
+a_local_cflags += -DDROPBEAR_PATH_SSH_PROGRAM='"/data/data/cn.redonly.sshd4nd/dropbear/scp"'
 a_local_cflags += -D_DEFAULT_AUTH_PW_DIR='"/data/data/cn.redonly.sshd4nd/home"'	# default: /data/local/tmp
 #a_local_cflags += -D_DEFAULT_AUTH_PW_SHELL='"/data/data/cn.redonly.sshd4nd/bin/busybox"'	# default: /system/bin/sh
 
@@ -23,7 +23,7 @@ a_src_common=dbutil.c buffer.c \
 			 queue.c \
 			 atomicio.c compat.c fake-rfc2553.c \
 			 ltc_prng.c ecc.c ecdsa.c crypto_desc.c \
-			 gensignkey.c gendss.c genrsa.c
+			 gensignkey.c gendss.c genrsa.c list.c netio.c
 
 a_src_clisvr=common-session.c packet.c common-algo.c common-kex.c \
 			 common-channel.c common-chansession.c termcodes.c loginrec.c \
@@ -33,7 +33,7 @@ a_src_clisvr=common-session.c packet.c common-algo.c common-kex.c \
 a_src_cli=cli-main.c cli-auth.c cli-authpasswd.c cli-kex.c \
 		  cli-session.c cli-runopts.c cli-chansession.c \
 		  cli-authpubkey.c cli-tcpfwd.c cli-channel.c cli-authinteract.c \
-		  cli-agentfwd.c list.c
+		  cli-agentfwd.c
 
 a_src_srv=svr-kex.c svr-auth.c sshpty.c \
 		  svr-authpasswd.c svr-authpubkey.c svr-authpubkeyoptions.c svr-session.c svr-service.c \
