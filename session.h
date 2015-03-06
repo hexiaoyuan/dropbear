@@ -22,8 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _SESSION_H_
-#define _SESSION_H_
+#ifndef DROPBEAR_SESSION_H_
+#define DROPBEAR_SESSION_H_
 
 #include "includes.h"
 #include "options.h"
@@ -38,12 +38,13 @@
 #include "tcpfwd.h"
 #include "chansession.h"
 #include "dbutil.h"
+#include "netio.h"
 
 extern int sessinitdone; /* Is set to 0 somewhere */
 extern int exitflag;
 
 void common_session_init(int sock_in, int sock_out);
-void session_loop(void(*loophandler)());
+void session_loop(void(*loophandler)()) ATTRIB_NORETURN;
 void session_cleanup();
 void send_session_identification();
 void send_msg_ignore();
@@ -55,12 +56,13 @@ const char* get_user_shell();
 void fill_passwd(const char* username);
 
 /* Server */
-void svr_session(int sock, int childpipe);
+void svr_session(int sock, int childpipe) ATTRIB_NORETURN;
 void svr_dropbear_exit(int exitcode, const char* format, va_list param) ATTRIB_NORETURN;
 void svr_dropbear_log(int priority, const char* format, va_list param);
 
 /* Client */
-void cli_session(int sock_in, int sock_out);
+void cli_session(int sock_in, int sock_out, struct dropbear_progress_connection *progress) ATTRIB_NORETURN;
+void cli_connected(int result, int sock, void* userdata, const char *errstring);
 void cleantext(unsigned char* dirtytext);
 
 /* crypto parameters that are stored individually for transmit and receive */
@@ -124,7 +126,11 @@ struct sshsession {
 							 buffer with the packet to send. */
 	struct Queue writequeue; /* A queue of encrypted packets to send */
 	buffer *readbuf; /* From the wire, decrypted in-place */
-	buffer *payload; /* Post-decompression, the actual SSH packet */
+	buffer *payload; /* Post-decompression, the actual SSH packet. 
+						May have extra data at the beginning, will be
+						passed to packet processing functions positioned past
+						that, see payload_beginning */
+	unsigned int payload_beginning;
 	unsigned int transseq, recvseq; /* Sequence IDs */
 
 	/* Packet-handling flags */
@@ -144,6 +150,8 @@ struct sshsession {
 	
 	int signal_pipe[2]; /* stores endpoints of a self-pipe used for
 						   race-free signal handling */
+
+	m_list conn_pending;
 						
 	/* time of the last packet send/receive, for keepalive. Not real-world clock */
 	time_t last_packet_time_keepalive_sent;
@@ -309,4 +317,4 @@ extern struct serversession svr_ses;
 extern struct clientsession cli_ses;
 #endif /* DROPBEAR_CLIENT */
 
-#endif /* _SESSION_H_ */
+#endif /* DROPBEAR_SESSION_H_ */

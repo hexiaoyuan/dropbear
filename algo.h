@@ -22,9 +22,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _ALGO_H_
+#ifndef DROPBEAR_ALGO_H_
 
-#define _ALGO_H_
+#define DROPBEAR_ALGO_H_
 
 #include "includes.h"
 #include "buffer.h"
@@ -51,6 +51,7 @@ extern algo_type sshhostkey[];
 extern algo_type sshciphers[];
 extern algo_type sshhashes[];
 extern algo_type ssh_compress[];
+extern algo_type ssh_delaycompress[];
 extern algo_type ssh_nocompress[];
 
 extern const struct dropbear_cipher dropbear_nocipher;
@@ -133,4 +134,4 @@ enum {
 	DROPBEAR_COMP_ZLIB_DELAY,
 };
 
-#endif /* _ALGO_H_ */
+#endif /* DROPBEAR_ALGO_H_ */

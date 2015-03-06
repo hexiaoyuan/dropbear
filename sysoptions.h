@@ -4,7 +4,7 @@
  *******************************************************************/
 
 #ifndef DROPBEAR_VERSION
-#define DROPBEAR_VERSION "2014.66"
+#define DROPBEAR_VERSION "2015.67"
 #endif
 
 #define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION
@@ -256,7 +256,15 @@
 #define DROPBEAR_LISTEN_BACKLOG MAX_CHANNELS
 #endif
 
+/* free memory before exiting */
+#define DROPBEAR_CLEANUP
+
 /* Use this string since some implementations might special-case it */
 #define DROPBEAR_KEEPALIVE_STRING "keepalive@openssh.com"
+
+/* Linux will attempt TCP fast open, falling back if not supported by the kernel */
+#ifdef __linux__
+#define DROPBEAR_TCP_FAST_OPEN 1
+#endif
 
 /* no include guard for this file */

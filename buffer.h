@@ -22,14 +22,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE. */
 
-#ifndef _BUFFER_H_
+#ifndef DROPBEAR_BUFFER_H_
 
-#define _BUFFER_H_
+#define DROPBEAR_BUFFER_H_
 
 #include "includes.h"
 
 struct buf {
-
+	/* don't manipulate data member outside of buffer.c - it
+	is a pointer into the malloc holding buffer itself */
 	unsigned char * data;
 	unsigned int len; /* the used size */
 	unsigned int pos;
@@ -40,7 +41,8 @@ struct buf {
 typedef struct buf buffer;
 
 buffer * buf_new(unsigned int size);
-void buf_resize(buffer *buf, unsigned int newsize);
+/* Possibly returns a new buffer*, like realloc() */
+buffer * buf_resize(buffer *buf, unsigned int newsize);
 void buf_free(buffer* buf);
 void buf_burn(buffer* buf);
 buffer* buf_newcopy(buffer* buf);
@@ -65,4 +67,4 @@ void buf_putmpint(buffer* buf, mp_int * mp);
 int buf_getmpint(buffer* buf, mp_int* mp);
 unsigned int buf_getint(buffer* buf);
 
-#endif /* _BUFFER_H_ */
+#endif /* DROPBEAR_BUFFER_H_ */
