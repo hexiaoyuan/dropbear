@@ -264,8 +264,16 @@ static int checkusername(unsigned char *username, unsigned int userlen) {
 					ses.authstate.pw_passwd = m_strdup(svr_opts.passwd);
 				else
 					ses.authstate.pw_passwd = m_strdup("");
-				ses.authstate.pw_dir = m_strdup("/data/local");
+#ifdef _DEFAULT_AUTH_PW_DIR
+				ses.authstate.pw_dir = m_strdup(_DEFAULT_AUTH_PW_DIR);
+#else
+				ses.authstate.pw_dir = m_strdup("/data/local/tmp");
+#endif
+#ifdef _DEFAULT_AUTH_PW_SHELL
+				ses.authstate.pw_shell = m_strdup(_DEFAULT_AUTH_PW_SHELL);
+#else
 				ses.authstate.pw_shell = m_strdup("/system/bin/sh");
+#endif
 			}else 
 #endif
 				fill_passwd(username);

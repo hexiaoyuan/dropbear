@@ -10,8 +10,10 @@ NDK_APP_PIE := true
 a_local_cflags := -O3 -Wall -fPIE -DDROPBEAR_SERVER -DDROPBEAR_CLIENT 
 a_local_cflags += -DDEBUG_TRACE
 a_local_cflags += -DDROPBEAR_DEFPORT='"22022"'
-a_local_cflags += -DSFTPSERVER_PATH='"/data/data/cn.redonly.ssh/dropbear/sftp-server"'
-a_local_cflags += -D_PATH_SSH_PROGRAM='"/data/data/cn.redonly.ssh/dropbear/scp"'
+a_local_cflags += -DSFTPSERVER_PATH='"/data/data/cn.redonly.sshd4nd/dropbear/sftp-server"'
+a_local_cflags += -D_PATH_SSH_PROGRAM='"/data/data/cn.redonly.sshd4nd/dropbear/scp"'
+a_local_cflags += -D_DEFAULT_AUTH_PW_DIR='"/data/data/cn.redonly.sshd4nd/home"'	# default: /data/local/tmp
+#a_local_cflags += -D_DEFAULT_AUTH_PW_SHELL='"/data/data/cn.redonly.sshd4nd/bin/busybox"'	# default: /system/bin/sh
 
 a_local_ldflags := -O3 -Wall -pie -fPIE
 
