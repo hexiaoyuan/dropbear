@@ -131,6 +131,7 @@ ecc_key *buf_get_ecdsa_priv_key(buffer *buf) {
 
 	if (buf_getmpint(buf, new_key->k) != DROPBEAR_SUCCESS) {
 		ecc_free(new_key);
+		m_free(new_key);
 		return NULL;
 	}
 
@@ -408,7 +409,7 @@ int buf_ecdsa_verify(buffer *buf, ecc_key *key, buffer *data_buf) {
 out:
 	ltc_ecc_del_point(mG);
 	ltc_ecc_del_point(mQ);
-	mp_clear_multi(r, s, v, w, u1, u2, p, e, m, NULL);
+	ltc_deinit_multi(r, s, v, w, u1, u2, p, e, m, NULL);
 	if (mp != NULL) { 
 		ltc_mp.montgomery_deinit(mp);
 	}
