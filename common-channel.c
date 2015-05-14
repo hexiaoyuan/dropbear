@@ -434,10 +434,36 @@ static void send_msg_channel_eof(struct Channel *channel) {
 	TRACE(("leave send_msg_channel_eof"))
 }
 
-/* Called to write data out to the local side of the channel. 
-   Writes the circular buffer contents and also the "moredata" buffer
-   if not null. Will ignore EAGAIN */
-static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
+#ifndef HAVE_WRITEV
+static void writechannel_fallback(struct Channel* channel, int fd, circbuffer *cbuf,
+	const unsigned char *UNUSED(moredata), unsigned int *morelen) {
+
+	unsigned char *circ_p1, *circ_p2;
+	unsigned int circ_len1, circ_len2;
+	ssize_t written;
+
+	if (morelen) {
+		/* fallback doesn't consume moredata */
+		*morelen = 0;
+	}
+
+	/* Write the first portion of the circular buffer */
+	cbuf_readptrs(cbuf, &circ_p1, &circ_len1, &circ_p2, &circ_len2);
+	written = write(fd, circ_p1, circ_len1);
+	if (written < 0) {
+		if (errno != EINTR && errno != EAGAIN) {
+			TRACE(("channel IO write error fd %d %s", fd, strerror(errno)))
+			close_chan_fd(channel, fd, SHUT_WR);
+		}
+	} else {
+		cbuf_incrread(cbuf, written);
+		channel->recvdonelen += written;
+	}
+}
+#endif /* !HAVE_WRITEV */
+
+#ifdef HAVE_WRITEV
+static void writechannel_writev(struct Channel* channel, int fd, circbuffer *cbuf,
 	const unsigned char *moredata, unsigned int *morelen) {
 
 	struct iovec iov[3];
@@ -445,9 +471,7 @@ static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 	unsigned int circ_len1, circ_len2;
 	int io_count = 0;
 
-	int written;
-
-	TRACE(("enter writechannel fd %d", fd))
+	ssize_t written;
 
 	cbuf_readptrs(cbuf, &circ_p1, &circ_len1, &circ_p2, &circ_len2);
 
@@ -473,6 +497,14 @@ static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 		io_count++;
 	}
 
+	if (io_count == 0) {
+		/* writechannel may sometimes be called twice in a main loop iteration.
+		From common_recv_msg_channel_data() then channelio().
+		The second call may not have any data to write, so we just return. */
+		TRACE(("leave writechannel, no data"))
+		return;
+	}
+
 	if (morelen) {
 		/* Default return value, none consumed */
 		*morelen = 0;
@@ -482,7 +514,7 @@ static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 
 	if (written < 0) {
 		if (errno != EINTR && errno != EAGAIN) {
-			TRACE(("errno %d len %d", errno, len))
+			TRACE(("channel IO write error fd %d %s", fd, strerror(errno)))
 			close_chan_fd(channel, fd, SHUT_WR);
 		}
 	} else {
@@ -494,24 +526,19 @@ static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 		channel->recvdonelen += written;
 	}
 
-#if 0
+}
+#endif /* HAVE_WRITEV */
 
-	maxlen = cbuf_readlen(cbuf);
-
-	/* Write the data out */
-	len = write(fd, cbuf_readptr(cbuf, maxlen), maxlen);
-	if (len <= 0) {
-		TRACE(("errno %d len %d", errno, len))
-		if (len < 0 && errno != EINTR) {
-			close_chan_fd(channel, fd, SHUT_WR);
-		}
-		TRACE(("leave writechannel: len <= 0"))
-		return;
-	}
-	TRACE(("writechannel wrote %d", len))
-
-	cbuf_incrread(cbuf, len);
-	channel->recvdonelen += len;
+/* Called to write data out to the local side of the channel. 
+   Writes the circular buffer contents and also the "moredata" buffer
+   if not null. Will ignore EAGAIN */
+static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
+	const unsigned char *moredata, unsigned int *morelen) {
+	TRACE(("enter writechannel fd %d", fd))
+#ifdef HAVE_WRITEV
+	writechannel_writev(channel, fd, cbuf, moredata, morelen);
+#else
+	writechannel_fallback(channel, fd, cbuf, moredata, morelen);
 #endif
 
 	/* Window adjust handling */
@@ -529,9 +556,10 @@ static void writechannel(struct Channel* channel, int fd, circbuffer *cbuf,
 	TRACE(("leave writechannel"))
 }
 
+
 /* Set the file descriptors for the main select in session.c
  * This avoid channels which don't have any window available, are closed, etc*/
-void setchannelfds(fd_set *readfds, fd_set *writefds) {
+void setchannelfds(fd_set *readfds, fd_set *writefds, int allow_reads) {
 	
 	unsigned int i;
 	struct Channel * channel;
@@ -549,7 +577,7 @@ void setchannelfds(fd_set *readfds, fd_set *writefds) {
 		FD if there's the possibility of "~."" to kill an 
 		interactive session (the read_mangler) */
 		if (channel->transwindow > 0
-		   && (ses.dataallowed || channel->read_mangler)) {
+		   && ((ses.dataallowed && allow_reads) || channel->read_mangler)) {
 
 			if (channel->readfd >= 0) {
 				FD_SET(channel->readfd, readfds);
@@ -830,6 +858,7 @@ void common_recv_msg_channel_data(struct Channel *channel, int fd,
 	channel->recvwindow -= datalen;
 	dropbear_assert(channel->recvwindow <= opts.recv_window);
 
+	/* Attempt to write the data immediately without having to put it in the circular buffer */
 	consumed = datalen;
 	writechannel(channel, fd, cbuf, buf_getptr(ses.payload, datalen), &consumed);
 
