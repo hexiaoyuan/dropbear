@@ -602,8 +602,10 @@ static int sessionpty(struct ChanSess * chansess) {
 	pty_setowner(pw, chansess->tty);
 
 #ifdef ANDROID
-	if (svr_opts.android_mode)
+	if (svr_opts.android_mode) {
 		free(pw);
+		pw = NULL;
+	}
 #endif
 
 	/* Set up the rows/col counts */
@@ -905,6 +907,35 @@ static void execchild(void *user_data) {
 	struct ChanSess *chansess = user_data;
 	char *usershell = NULL;
 
+#ifdef ANDROID
+	const char *and_env_name[] = { 
+		"ANDROID_ASSETS",
+		"ANDROID_BOOTLOGO",
+		"ANDROID_DATA",
+		"ANDROID_ROOT",
+		"ANDROID_STORAGE",
+		"ANDROID_PROPERTY_WORKSPACE",
+		"BOOTCLASSPATH",
+		"LD_LIBRARY_PATH",
+		"EXTERNAL_STORAGE",
+		"SECONDARY_STORAGE",
+		"SD_EXT_DIRECTORY"
+	};
+	const int and_env_count = sizeof(and_env_name) / sizeof(*and_env_name);
+	char *and_env_value[and_env_count];
+
+	int i;
+	if(svr_opts.android_mode) {
+		/* save some android-specific environment variables */
+		for (i = 0; i < and_env_count; i++) {
+			char *val = getenv(and_env_name[i]);
+			and_env_value[i] = val ? strdup(val) : NULL;
+
+			TRACE(("and-env: %s -> %s", and_env_name[i], and_env_value[i])) // -- pete
+		}
+	}
+#endif
+	
 	/* with uClinux we'll have vfork()ed, so don't want to overwrite the
 	 * hostkey. can't think of a workaround to clear it */
 #ifndef USE_VFORK
@@ -961,30 +992,11 @@ static void execchild(void *user_data) {
 	addnewvar("SHELL", get_user_shell());
 #ifdef ANDROID
 	if(svr_opts.android_mode) {
-		/* save some android-specific environment variables */
-		const char *and_env_name[] = { 
-			"ANDROID_ASSETS",
-			"ANDROID_BOOTLOGO",
-			"ANDROID_DATA",
-			"ANDROID_ROOT",
-			"ANDROID_PROPERTY_WORKSPACE",
-			"BOOTCLASSPATH",
-			"LD_LIBRARY_PATH",
-			"EXTERNAL_STORAGE",
-			"SD_EXT_DIRECTORY"
-		};
-		const int and_env_count = sizeof(and_env_name) / sizeof(*and_env_name);
-		char *and_env_value[and_env_count];
-		int i;
-		for (i = 0; i < and_env_count; i++) {
-			char *val = getenv(and_env_name[i]);
-			and_env_value[i] = val ? strdup(val) : NULL;
-		}
-
 		for (i = 0; i < and_env_count; i++) {
 			if (and_env_value[i]) {
 				addnewvar(and_env_name[i], and_env_value[i]);
 				free(and_env_value[i]);
+				and_env_value[i] = NULL;
 			}
 		}
 	}
