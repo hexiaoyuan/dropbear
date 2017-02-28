@@ -21,23 +21,6 @@ struct dropbear_progress_connection {
 	char* errstring;
 };
 
-#if defined(__linux__) && defined(TCP_DEFER_ACCEPT)
-static void set_piggyback_ack(int sock) {
-	/* Undocumented Linux feature - set TCP_DEFER_ACCEPT and data will be piggybacked
-	on the 3rd packet (ack) of the TCP handshake. Saves a IP packet.
-	http://thread.gmane.org/gmane.linux.network/224627/focus=224727
-	"Piggyback the final ACK of the three way TCP connection establishment with the data" */
-	int val = 1;
-	/* No error checking, this is opportunistic */
-	int err = setsockopt(sock, IPPROTO_TCP, TCP_DEFER_ACCEPT, (void*)&val, sizeof(val));
-	if (err)
-	{
-		TRACE(("Failed setsockopt TCP_DEFER_ACCEPT: %s", strerror(errno)))
-	}
-}
-#endif
-
-
 /* Deallocate a progress connection. Removes from the pending list if iter!=NULL.
 Does not close sockets */
 static void remove_connect(struct dropbear_progress_connection *c, m_list_elem *iter) {
@@ -70,7 +53,7 @@ static void connect_try_next(struct dropbear_progress_connection *c) {
 	struct addrinfo *r;
 	int res = 0;
 	int fastopen = 0;
-#ifdef DROPBEAR_CLIENT_TCP_FAST_OPEN
+#if DROPBEAR_CLIENT_TCP_FAST_OPEN
 	struct msghdr message;
 #endif
 
@@ -78,7 +61,7 @@ static void connect_try_next(struct dropbear_progress_connection *c) {
 	{
 		dropbear_assert(c->sock == -1);
 
-		c->sock = socket(c->res_iter->ai_family, c->res_iter->ai_socktype, c->res_iter->ai_protocol);
+		c->sock = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
 		if (c->sock < 0) {
 			continue;
 		}
@@ -87,11 +70,7 @@ static void connect_try_next(struct dropbear_progress_connection *c) {
 		set_sock_nodelay(c->sock);
 		setnonblocking(c->sock);
 
-#if defined(__linux__) && defined(TCP_DEFER_ACCEPT)
-		set_piggyback_ack(c->sock);
-#endif
-
-#ifdef DROPBEAR_CLIENT_TCP_FAST_OPEN
+#if DROPBEAR_CLIENT_TCP_FAST_OPEN
 		fastopen = (c->writequeue != NULL);
 
 		if (fastopen) {
@@ -195,28 +174,26 @@ void remove_connect_pending() {
 
 void set_connect_fds(fd_set *writefd) {
 	m_list_elem *iter;
-	TRACE(("enter handle_connect_fds"))
-	for (iter = ses.conn_pending.first; iter; iter = iter->next) {
+	TRACE(("enter set_connect_fds"))
+	iter = ses.conn_pending.first;
+	while (iter) {
+		m_list_elem *next_iter = iter->next;
 		struct dropbear_progress_connection *c = iter->item;
 		/* Set one going */
-		while (c->res_iter && c->sock < 0)
-		{
+		while (c->res_iter && c->sock < 0) {
 			connect_try_next(c);
 		}
 		if (c->sock >= 0) {
 			FD_SET(c->sock, writefd);
 		} else {
-			m_list_elem *remove_iter;
 			/* Final failure */
 			if (!c->errstring) {
 				c->errstring = m_strdup("unexpected failure");
 			}
 			c->cb(DROPBEAR_FAILURE, -1, c->cb_data, c->errstring);
-			/* Safely remove without invalidating iter */
-			remove_iter = iter;
-			iter = iter->prev;
-			remove_connect(c, remove_iter);
+			remove_connect(c, iter);
 		}
+		iter = next_iter;
 	}
 }
 
@@ -313,7 +290,7 @@ void set_sock_nodelay(int sock) {
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*)&val, sizeof(val));
 }
 
-#ifdef DROPBEAR_SERVER_TCP_FAST_OPEN
+#if DROPBEAR_SERVER_TCP_FAST_OPEN
 void set_listen_fast_open(int sock) {
 	int qlen = MAX(MAX_UNAUTH_PER_IP, 5);
 	if (setsockopt(sock, SOL_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen)) != 0) {

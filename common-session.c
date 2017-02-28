@@ -36,10 +36,10 @@
 #include "runopts.h"
 #include "netio.h"
 
-static void checktimeouts();
-static long select_timeout();
+static void checktimeouts(void);
+static long select_timeout(void);
 static int ident_readln(int fd, char* buf, int count);
-static void read_session_identification();
+static void read_session_identification(void);
 
 struct sshsession ses; /* GLOBAL */
 
@@ -54,7 +54,7 @@ int exitflag = 0; /* GLOBAL */
 void common_session_init(int sock_in, int sock_out) {
 	time_t now;
 
-#ifdef DEBUG_TRACE
+#if DEBUG_TRACE
 	debug_start_net();
 #endif
 
@@ -76,6 +76,7 @@ void common_session_init(int sock_in, int sock_out) {
 	update_channel_prio();
 
 	now = monotonic_now();
+	ses.connect_time = now;
 	ses.last_packet_time_keepalive_recv = now;
 	ses.last_packet_time_idle = now;
 	ses.last_packet_time_any_sent = 0;
@@ -158,6 +159,17 @@ void session_loop(void(*loophandler)()) {
 		FD_ZERO(&readfd);
 		dropbear_assert(ses.payload == NULL);
 
+		/* We get woken up when signal handlers write to this pipe.
+		   SIGCHLD in svr-chansession is the only one currently. */
+		FD_SET(ses.signal_pipe[0], &readfd);
+		ses.channel_signal_pending = 0;
+
+		/* set up for channels which can be read/written */
+		setchannelfds(&readfd, &writefd, writequeue_has_space);
+
+		/* Pending connections to test */
+		set_connect_fds(&writefd);
+
 		/* We delay reading from the input socket during initial setup until
 		after we have written out our initial KEXINIT packet (empty writequeue). 
 		This means our initial packet can be in-flight while we're doing a blocking
@@ -169,19 +181,12 @@ void session_loop(void(*loophandler)()) {
 			&& writequeue_has_space) {
 			FD_SET(ses.sock_in, &readfd);
 		}
+
+		/* Ordering is important, this test must occur after any other function
+		might have queued packets (such as connection handlers) */
 		if (ses.sock_out != -1 && !isempty(&ses.writequeue)) {
 			FD_SET(ses.sock_out, &writefd);
 		}
-		
-		/* We get woken up when signal handlers write to this pipe.
-		   SIGCHLD in svr-chansession is the only one currently. */
-		FD_SET(ses.signal_pipe[0], &readfd);
-
-		/* set up for channels which can be read/written */
-		setchannelfds(&readfd, &writefd, writequeue_has_space);
-
-		/* Pending connections to test */
-		set_connect_fds(&writefd);
 
 		val = select(ses.maxfd+1, &readfd, &writefd, NULL, &timeout);
 
@@ -207,7 +212,9 @@ void session_loop(void(*loophandler)()) {
 		wake up the select() above. */
 		if (FD_ISSET(ses.signal_pipe[0], &readfd)) {
 			char x;
+			TRACE(("signal pipe set"))
 			while (read(ses.signal_pipe[0], &x, 1) > 0) {}
+			ses.channel_signal_pending = 1;
 		}
 
 		/* check for auth timeout, rekeying required etc */
@@ -288,7 +295,7 @@ void session_cleanup() {
 	}
 
 	/* After these are freed most functions will fail */
-#ifdef DROPBEAR_CLEANUP
+#if DROPBEAR_CLEANUP
 	/* listeners call cleanup functions, this should occur before
 	other session state is freed. */
 	remove_all_listeners();
@@ -354,7 +361,7 @@ static void read_session_identification() {
 	}
 
 	if (!done) {
-		TRACE(("err: %s for '%s'\n", strerror(errno), linebuf))
+		TRACE(("error reading remote ident: %s\n", strerror(errno)))
 		ses.remoteclosed();
 	} else {
 		/* linebuf is already null terminated */
@@ -486,6 +493,11 @@ static void checktimeouts() {
 	time_t now;
 	now = monotonic_now();
 	
+	if (IS_DROPBEAR_SERVER && ses.connect_time != 0
+		&& now - ses.connect_time >= AUTH_TIMEOUT) {
+			dropbear_close("Timeout before auth");
+	}
+
 	/* we can't rekey if we haven't done remote ident exchange yet */
 	if (ses.remoteident == NULL) {
 		return;
@@ -526,20 +538,41 @@ static void checktimeouts() {
 	}
 }
 
+static void update_timeout(long limit, long now, long last_event, long * timeout) {
+	TRACE2(("update_timeout limit %ld, now %ld, last %ld, timeout %ld",
+		limit, now, last_event, *timeout))
+	if (last_event > 0 && limit > 0) {
+		*timeout = MIN(*timeout, last_event+limit-now);
+		TRACE2(("new timeout %ld", *timeout))
+	}
+}
+
 static long select_timeout() {
 	/* determine the minimum timeout that might be required, so
 	as to avoid waking when unneccessary */
-	long ret = LONG_MAX;
-	if (KEX_REKEY_TIMEOUT > 0)
-		ret = MIN(KEX_REKEY_TIMEOUT, ret);
-	/* AUTH_TIMEOUT is only relevant before authdone */
-	if (ses.authstate.authdone != 1 && AUTH_TIMEOUT > 0)
-		ret = MIN(AUTH_TIMEOUT, ret);
-	if (opts.keepalive_secs > 0)
-		ret = MIN(opts.keepalive_secs, ret);
-	if (opts.idle_timeout_secs > 0)
-		ret = MIN(opts.idle_timeout_secs, ret);
-	return ret;
+	long timeout = KEX_REKEY_TIMEOUT;
+	long now = monotonic_now();
+
+	if (!ses.kexstate.sentkexinit) {
+		update_timeout(KEX_REKEY_TIMEOUT, now, ses.kexstate.lastkextime, &timeout);
+	}
+
+	if (ses.authstate.authdone != 1 && IS_DROPBEAR_SERVER) {
+		/* AUTH_TIMEOUT is only relevant before authdone */
+		update_timeout(AUTH_TIMEOUT, now, ses.connect_time, &timeout);
+	}
+
+	if (ses.authstate.authdone) {
+		update_timeout(opts.keepalive_secs, now, 
+			MAX(ses.last_packet_time_keepalive_recv, ses.last_packet_time_keepalive_sent),
+			&timeout);
+	}
+
+	update_timeout(opts.idle_timeout_secs, now, ses.last_packet_time_idle,
+		&timeout);
+
+	/* clamp negative timeouts to zero - event has already triggered */
+	return MAX(timeout, 0);
 }
 
 const char* get_user_shell() {
