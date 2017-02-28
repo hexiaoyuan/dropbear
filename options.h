@@ -339,7 +339,7 @@ be overridden at runtime with -I. 0 disables idle timeouts */
 
 /* The default path. This will often get replaced by the shell */
 #ifndef DEFAULT_PATH
-#define DEFAULT_PATH "/usr/bin:/bin:/usr/sbin:/sbin:/system/sbin:/system/bin:/system/xbin"
+#define DEFAULT_PATH "/su/bin:/su/xbin:/system/bin:/system/xbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 #endif
 
 /* Some other defines (that mostly should be left alone) are defined

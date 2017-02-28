@@ -13,7 +13,7 @@ a_local_cflags += -DDROPBEAR_DEFPORT='"22022"'
 a_local_cflags += -DSFTPSERVER_PATH='"/data/data/me.xyhe.sshd4android/dropbear/sftp-server"'
 a_local_cflags += -DDROPBEAR_PATH_SSH_PROGRAM='"/data/data/me.xyhe.sshd4android/dropbear/scp"'
 a_local_cflags += -D_DEFAULT_AUTH_PW_DIR='"/data/data/me.xyhe.sshd4android/home"'	# default: /data/local/tmp
-a_local_cflags += -DDEFAULT_PATH='"/data/data/me.xyhe.sshd4android/dropbear:/usr/bin:/bin:/usr/sbin:/sbin:/system/sbin:/system/bin:/system/xbin"'
+a_local_cflags += -DDEFAULT_PATH='"/data/data/me.xyhe.sshd4android/dropbear:/su/bin:/su/xbin:/system/bin:/system/xbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"'
 
 #a_local_cflags += -D_DEFAULT_AUTH_PW_SHELL='"/data/data/me.xyhe.sshd4android/dropbear/busybox"'	# default: /system/bin/sh
 
